@@ -19,5 +19,3 @@ with sync_playwright() as playwright:
     password_input.fill('password')
 
     expect(disable_button).to_be_editable()
-
-    page.wait_for_timeout(3000)
