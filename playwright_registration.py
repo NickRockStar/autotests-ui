@@ -15,8 +15,8 @@ with sync_playwright() as playwright:
     password_input = page.locator('//*[@id=":r2:"]')
     password_input.fill('password')
 
-    registrasion_button = page.get_by_test_id('registration-page-registration-button')
-    registrasion_button.click()
+    registration_button = page.get_by_test_id('registration-page-registration-button')
+    registration_button.click()
 
     dashboard_title = page.get_by_test_id('dashboard-toolbar-title-text')
     expect(dashboard_title).to_be_visible()
