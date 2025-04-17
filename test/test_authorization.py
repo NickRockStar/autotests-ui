@@ -1,22 +1,24 @@
 import pytest
-from playwright.sync_api import expect, Page
+from playwright.sync_api import Page, expect
 
 
-@pytest.mark.regression
-@pytest.mark.authorization
-def test_wrong_email_or_password_authorization(initialize_browser_state: Page, chromium_page_with_state):
-        initialize_browser_state.goto("https://nikita-filonov.github.io/qa-automation-engineer-ui-course/#/auth/login")
+@pytest.mark.parametrize("email, password", [
+    ("user.name@gmail.com", "password"),
+    ("user.name@gmail.com", "  "),
+    ("  ", "password")
+])
+def test_wrong_email_or_password_authorization(page: Page, email: str, password: str):
+    page.goto('https://nikita-filonov.github.io/qa-automation-engineer-ui-course/#/auth/login')
 
-        email_input = initialize_browser_state.get_by_test_id('login-form-email-input').locator('input')
-        email_input.fill("user.name@gmail.com")
+    email_input = page.get_by_test_id('login-form-email-input').locator('input')
+    email_input.fill(email)
 
-        password_input = initialize_browser_state.get_by_test_id('login-form-password-input').locator('input')
-        password_input.fill("password")
+    password_input = page.get_by_test_id('login-form-password-input').locator('input')
+    password_input.fill(password)
 
-        login_button = initialize_browser_state.get_by_test_id('login-page-login-button')
-        login_button.click()
+    login_button = page.get_by_test_id('login-page-login-button')
+    login_button.click()
 
-        wrong_email_or_password_alert = chromium_page_with_state.get_by_test_id('login-page-wrong-email'
-                                                                                '-or-password-alert')
-        expect(wrong_email_or_password_alert).to_be_visible()
-        expect(wrong_email_or_password_alert).to_have_text("Wrong email or password")
+    error_message = page.get_by_test_id('login-page-wrong-email-or-password-alert')
+    expect(error_message).to_be_visible()
+    expect(error_message).to_have_text("Wrong email or password")
