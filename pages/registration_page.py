@@ -1,30 +1,27 @@
-from playwright.sync_api import Page
+from playwright.sync_api import Page, expect
+
+from pages.base_page import BasePage
 
 
-class RegistrationPage:
+class RegistrationPage(BasePage):
     def __init__(self, page: Page):
-        self.page = page
-        self.first_name_input = page.get_by_test_id("registration-first-name-input")
-        self.last_name_input = page.get_by_test_id("registration-last-name-input")
-        self.email_input = page.get_by_test_id("registration-email-input")
-        self.password_input = page.get_by_test_id("registration-password-input")
-        self.confirm_password_input = page.get_by_test_id("registration-confirm-password-input")
-        self.submit_button = page.get_by_test_id("registration-submit-button")
+        super().__init__(page)
 
-    def fill_registration_first_name_input(self, first_name: str) -> None:
-        self.first_name_input.fill(first_name)
+        self.email_input = page.get_by_test_id('registration-form-email-input').locator('input')
+        self.username_input = page.get_by_test_id('registration-form-username-input').locator('input')
+        self.password_input = page.get_by_test_id('registration-form-password-input').locator('input')
+        self.registration_button = page.get_by_test_id('registration-page-registration-button')
+        self.login_link = page.get_by_test_id('registration-page-login-link')
 
-    def fill_registration_last_name_input(self, last_name: str) -> None:
-        self.last_name_input.fill(last_name)
-
-    def fill_registration_email_input(self, email: str) -> None:
+    def fill_registration_form(self, email: str, username: str, password: str):
         self.email_input.fill(email)
+        expect(self.email_input).to_have_value(email)
 
-    def fill_registration_password_input(self, password: str) -> None:
+        self.username_input.fill(username)
+        expect(self.username_input).to_have_value(username)
+
         self.password_input.fill(password)
+        expect(self.password_input).to_have_value(password)
 
-    def fill_registration_confirm_password_input(self, password: str) -> None:
-        self.confirm_password_input.fill(password)
-
-    def click_registration_submit_button(self) -> None:
-        self.submit_button.click()
+    def click_registration_button(self):
+        self.registration_button.click()
