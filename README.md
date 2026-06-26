@@ -15,7 +15,7 @@
 ### [Документация по работе с XPath](https://www.w3schools.com/xml/xpath_syntax.asp)
 ### [Интерактивный тренажёр по XPath](https://automationfc.github.io/xpath-dinner/)
 ## Pytest маркировки (markers)
-### Вывести маркеровки 
+### Вывести зарегестрированные маркеровки 
 > python -m pytest --markers
 ### [Официальная документация Pytest по работе с маркировками](https://docs.pytest.org/en/stable/example/markers.html)
 ### [Официальная документация Pytest по регистрации маркировок](https://docs.pytest.org/en/stable/example/markers.html#registering-markers)
@@ -25,8 +25,17 @@
 ## Фикстуры в pytest
 ### [Официальная документация Pytest по работе с фикстурами](https://docs.pytest.org/en/6.2.x/fixture.html)
 ### [Официальная документация Pytest по работе с conftest.py файлами](https://docs.pytest.org/en/6.2.x/fixture.html#conftest-py-sharing-fixtures-across-multiple-files)
+#### Scope фикстуры:
+> autouse=True - запускаеться автоматически на каждый тест (имет дефолтное значение )
+>
+> scope="session" - используеться один раз на тестовую ссесию
+> 
+> scope="class" - используеться один раз на тестовый класс 
+> 
+> scope="function" - используеться на каждую функцию
 ## Работа с плагином pytest-playwright
 ### [Официальная документация плагина pytest-playwright](https://playwright.dev/python/docs/intro)
+> pip install pytest-playwright
 ## Знакомство с pytest плагинами
 ### [Официальная документация по pytest плагинам](https://docs.pytest.org/en/7.1.x/how-to/writing_plugins.html)
 ### [Список всех доступных плагинов](https://docs.pytest.org/en/stable/reference/plugin_list.html)
