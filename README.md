@@ -44,6 +44,13 @@
 ### [Официальная документация Pytest по работе с идентификаторами в параметризации](https://docs.pytest.org/en/stable/example/parametrize.html#different-options-for-test-ids)
 ## Перезапуск автотестов в pytest
 ### [pytest-rerunfailures](https://github.com/pytest-dev/pytest-rerunfailures)
+> pip install pytest-rerunfailures
+> 
+> reruns - параметр количество перезапусков 
+> 
+> reruns_delay - интервал перезапуска
+> 
+> condition - условие для выполняния 
 ## Знакомство с Page Object
 ### [Документация от playwright](https://playwright.dev/python/docs/pom)
 ### [Документация от selenium](https://selenium-python.readthedocs.io/page-objects.html)
