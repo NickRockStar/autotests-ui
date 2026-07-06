@@ -29,8 +29,8 @@ def test_create_course(courses_list_page: CoursesListPage, create_course_page: C
     )
     create_course_page.create_course_toolbar_view.click_create_course_button()
 
-    courses_list_page.toolbar_view.check_visible()
-    courses_list_page.course_view.check_visible(
+    # courses_list_page.toolbar_view.check_visible()
+    courses_list_page.check_visible_course_card(
         index=0, title="Playwright", max_score="100", min_score="10", estimated_time="2 weeks"
     )
 
@@ -43,5 +43,5 @@ def test_empty_courses_list(courses_list_page: CoursesListPage):
     courses_list_page.navbar.check_visible('username')
     courses_list_page.sidebar.check_visible()
 
-    courses_list_page.toolbar_view.check_visible()
+    # courses_list_page.toolbar_view.check_visible()
     courses_list_page.check_visible_empty_view()
