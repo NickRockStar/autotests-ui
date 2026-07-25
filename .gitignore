@@ -17,4 +17,4 @@ tracing
 
 # my artifacts
 my_info.md
-fixtures/broweser_auto.py
+fixtures/broweser_auto.py.venv/
