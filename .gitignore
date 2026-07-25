@@ -1,3 +1,20 @@
-.venv/
+# pycharm
+.idea
+
+# python
+venv
+__pycache__
+
+# allure
+allure-results
+allutre-report
+
+# testing artifacts
+*.html
+*.json
+videos
+tracing
+
+# my artifacts
 my_info.md
 fixtures/broweser_auto.py
