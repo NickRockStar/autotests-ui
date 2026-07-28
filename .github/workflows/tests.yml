@@ -6,22 +6,18 @@ on:
   pull_request:
     branches: [ main ]
 
-# Опционально: для тестирования Node 24
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   run-tests:
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5.1.0
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -31,40 +27,52 @@ jobs:
           pip install -r requirements.txt
           playwright install --with-deps
 
-      # 🔥 СОЗДАЕМ ВСЕ ДИРЕКТОРИИ
-      - name: Create directories
+      - name: Create required directories
         run: |
           mkdir -p allure-results allure-history
-          echo "✅ Directories created"
-          echo "Initial history" > allure-history/.keep
-          ls -la
+          echo "Directories created"
 
       - name: Run Playwright tests
         run: |
           pytest -m regression --alluredir=allure-results --numprocesses 2
         continue-on-error: true
 
-      # 🔥 ИСПРАВЛЕННЫЙ ШАГ: Клонируем gh-pages без ошибки
-      - name: Get or create gh-pages history
+      - name: Check Dockerfile
+        id: docker_check
+        run: |
+          if [ -f "Dockerfile" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Dockerfile not found - skipping Docker build"
+          fi
+
+      - name: Build Docker image (if Dockerfile exists)
+        if: steps.docker_check.outputs.exists == 'true'
+        run: |
+          docker build -t ui-tests .
+          echo "✅ Docker image built successfully"
+
+      - name: Get Allure history
+        uses: actions/checkout@v4
+        if: always()
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
+
+      - name: Copy history to allure-history
         if: always()
         run: |
-          # Пытаемся клонировать, но не падаем при ошибке
-          git clone --depth 1 --branch gh-pages \
-            https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git \
-            gh-pages 2>/dev/null || true
-          
-          # Если клонирование не удалось, создаем пустую директорию
-          if [ ! -d "gh-pages" ]; then
-            mkdir -p gh-pages
-            echo "ℹ️ gh-pages branch does not exist, created empty directory"
+          if [ -d "gh-pages" ] && [ "$(ls -A gh-pages 2>/dev/null)" ]; then
+            cp -r gh-pages/* allure-history/ || true
+            echo "History copied from gh-pages"
           else
-            echo "✅ gh-pages cloned successfully"
-            # Копируем историю, если она есть
-            if [ "$(ls -A gh-pages 2>/dev/null)" ]; then
-              cp -r gh-pages/* allure-history/ || true
-              echo "✅ History copied from gh-pages"
-            fi
+            echo "No existing history found"
           fi
+          mkdir -p allure-history
 
       - name: Generate Allure Report
         uses: simple-elf/allure-report-action@v1.7
@@ -83,18 +91,3 @@ jobs:
           keep_files: true
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
-
-      # 🔥 ОТЛАДКА DOCKER (если используете)
-      - name: Debug and build Docker
-        if: always()  # Запускаем даже если тесты упали
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "Dockerfile exists:"
-          ls -la Dockerfile || echo "⚠️ Dockerfile not found!"
-          
-          echo "Building Docker image..."
-          docker build --no-cache -t my-app . || {
-            echo "❌ Docker build failed. Check Dockerfile and context."
-            exit 1
-          }
-          echo "✅ Docker build successful"
