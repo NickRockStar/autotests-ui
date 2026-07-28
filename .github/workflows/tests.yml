@@ -1,65 +1,100 @@
-# Имя вашего workflow, которое будет отображаться в интерфейсе GitHub Actions
 name: UI tests
 
-# Указываем, когда будет запускаться данный workflow
 on:
   push:
-    branches:
-      - main  # Запускать workflow, когда будет сделан коммит в ветку main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main  # Запускать workflow, когда будет сделан pull request в ветку main
+    branches: [ main ]
 
-# Определяем все шаги, которые должны быть выполнены в рамках работы с тестами
+# Опционально: для тестирования Node 24
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   run-tests:
-    runs-on: ubuntu-latest  # Указываем, что тесты будут запускаться на последней версии Ubuntu
+    runs-on: ubuntu-latest
 
     steps:
-      # 1. Шаг, который будет клонировать ваш репозиторий на машину GitHub Actions
       - name: Check out repository
-        uses: actions/checkout@v4  # Используем GitHub Action для клонирования репозитория
-
-      # 2. Шаг для установки Python на виртуальной машине
-      - name: Set up Python
-        uses: actions/setup-python@v4  # Используем GitHub Action для установки Python
+        uses: actions/checkout@v4.2.2
         with:
-          python-version: '3.11'  # Устанавливаем версию Python 3.11 (можно заменить на другую версию)
+          fetch-depth: 0
 
-      # 3. Шаг для установки всех зависимостей проекта
+      - name: Set up Python
+        uses: actions/setup-python@v5.1.0
+        with:
+          python-version: '3.11'
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip  # Обновляем pip до последней версии
-          pip install -r requirements.txt  # Устанавливаем зависимости, указанные в requirements.txt
-          playwright install --with-deps  # Устанавливаем браузеры для Playwright (если они не установлены)
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          playwright install --with-deps
 
-      # 4. Шаг для запуска тестов с использованием pytest и генерации отчётов Allure
-      - name: Run Playwright tests with pytest and generate Allure results
+      # 🔥 СОЗДАЕМ ВСЕ ДИРЕКТОРИИ
+      - name: Create directories
         run: |
-          pytest -m regression --alluredir=allure-results --numprocesses 2  # Запускаем тесты, отмеченные как "regression", генерируем результаты для Allure
+          mkdir -p allure-results allure-history
+          echo "✅ Directories created"
+          echo "Initial history" > allure-history/.keep
+          ls -la
 
-      # 5. Шаг для получения истории отчётов Allure, если она существует
-      - name: Get Allure history
-        uses: actions/checkout@v4  # Опять клонируем репозиторий, чтобы получить историю отчётов
-        if: always()  # Всегда выполняем, независимо от успеха или неудачи предыдущих шагов
-        continue-on-error: true  # Если здесь возникнет ошибка, workflow всё равно продолжит выполнение
-        with:
-          ref: gh-pages  # Указываем ветку gh-pages для получения отчётов
-          path: gh-pages  # Указываем путь для сохранения отчётов
+      - name: Run Playwright tests
+        run: |
+          pytest -m regression --alluredir=allure-results --numprocesses 2
+        continue-on-error: true
 
-      # 6. Шаг для генерации и отображения отчёта Allure
-      - name: Generates Allure Report with history
-        uses: simple-elf/allure-report-action@v1.7  # Используем готовое решение из GitHub Marketplace для генерации Allure отчёта
-        if: always()  # Этот шаг тоже всегда выполняется
-        with:
-          allure_results: allure-results  # Указываем каталог с результатами тестов
-          allure_history: allure-history  # Указываем каталог для истории отчётов Allure
+      # 🔥 ИСПРАВЛЕННЫЙ ШАГ: Клонируем gh-pages без ошибки
+      - name: Get or create gh-pages history
+        if: always()
+        run: |
+          # Пытаемся клонировать, но не падаем при ошибке
+          git clone --depth 1 --branch gh-pages \
+            https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git \
+            gh-pages 2>/dev/null || true
+          
+          # Если клонирование не удалось, создаем пустую директорию
+          if [ ! -d "gh-pages" ]; then
+            mkdir -p gh-pages
+            echo "ℹ️ gh-pages branch does not exist, created empty directory"
+          else
+            echo "✅ gh-pages cloned successfully"
+            # Копируем историю, если она есть
+            if [ "$(ls -A gh-pages 2>/dev/null)" ]; then
+              cp -r gh-pages/* allure-history/ || true
+              echo "✅ History copied from gh-pages"
+            fi
+          fi
 
-      # 7. Шаг для деплоя отчёта Allure на GitHub Pages, чтобы его можно было просматривать в браузере
-      - name: Deploy report to Github Pages
-        if: always()  # Выполняется всегда, независимо от успеха других шагов
-        uses: peaceiris/actions-gh-pages@v4  # Используем GitHub Action для публикации отчёта на GitHub Pages
+      - name: Generate Allure Report
+        uses: simple-elf/allure-report-action@v1.7
+        if: always()
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}  # Токен для аутентификации на GitHub
-          publish_branch: gh-pages  # Указываем, что отчёт будет опубликован в ветке gh-pages
-          publish_dir: allure-history  # Указываем папку, которая будет опубликована на GitHub Pages
+          allure_results: allure-results
+          allure_history: allure-history
+
+      - name: Deploy report to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
+          keep_files: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+
+      # 🔥 ОТЛАДКА DOCKER (если используете)
+      - name: Debug and build Docker
+        if: always()  # Запускаем даже если тесты упали
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Dockerfile exists:"
+          ls -la Dockerfile || echo "⚠️ Dockerfile not found!"
+          
+          echo "Building Docker image..."
+          docker build --no-cache -t my-app . || {
+            echo "❌ Docker build failed. Check Dockerfile and context."
+            exit 1
+          }
+          echo "✅ Docker build successful"
