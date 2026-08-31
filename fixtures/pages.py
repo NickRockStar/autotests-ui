@@ -19,8 +19,8 @@ def dashboard_page(page: Page) -> DashboardPage:
 
 
 @pytest.fixture
-def dashboard_page_with_state(page: Page) -> DashboardPage:
-    return DashboardPage(page=page)
+def dashboard_page_with_state(page_with_state: Page) -> DashboardPage:
+    return DashboardPage(page=page_with_state)
 
 
 @pytest.fixture
