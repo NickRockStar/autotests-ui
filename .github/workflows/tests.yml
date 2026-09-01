@@ -10,7 +10,6 @@ on:
     branches:
       - main  # Запускать workflow, когда будет сделан pull request в ветку main
 
-# Определяем все шаги, которые должны быть выполнены в рамках работы с тестами
 jobs:
   run-tests:
     runs-on: ubuntu-latest  # Указываем, что тесты будут запускаться на последней версии Ubuntu
@@ -33,13 +32,29 @@ jobs:
           pip install -r requirements.txt
           playwright install --with-deps
 
-      # 4. Шаг для запуска тестов с использованием pytest и генерации отчётов Allure
+
       - name: Run Playwright tests with pytest and generate Allure results
         run: |
           pytest -m regression --alluredir=allure-results --numprocesses 2
-        continue-on-error: true  # ✅ Добавлено: тесты могут упасть, но отчёт всё равно нужно сгенерировать
+        continue-on-error: true
 
-      # 5. Шаг для получения истории отчётов Allure, если она существует
+      - name: Upload allure-results
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results
+
+  publish-report:
+    needs: run-tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download allure-results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results
+
       - name: Get Allure history
         uses: actions/checkout@v4
         if: always()
@@ -48,23 +63,20 @@ jobs:
           ref: gh-pages
           path: gh-pages
 
-      # 6. Шаг для генерации и отображения отчёта Allure
       - name: Generate Allure Report with history
         uses: simple-elf/allure-report-action@v1.14
         if: always()
         with:
           allure_results: allure-results
           allure_history: allure-history
-          # ✅ Добавлены недостающие параметры из вашей ошибки
           allure_report: allure-report
           gh_pages: gh-pages
           keep_reports: 20
 
-      # 7. Шаг для деплоя отчёта Allure на GitHub Pages
       - name: Deploy report to Github Pages
         if: always()
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: allure-history  # ✅ Оставляем allure-history, так как action сохраняет туда отчёт
+          publish_dir: allure-history
