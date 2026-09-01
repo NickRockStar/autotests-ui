@@ -15,6 +15,14 @@ allutre-report
 videos
 tracing
 
+# Allure reports for the browser-matrix homework
+!chromium-webkit/
+!chromium-webkit/**
+!webkit-firefox/
+!webkit-firefox/**
+!chromium-webkit-firefox/
+!chromium-webkit-firefox/**
+
 # my artifacts
 my_info.md
 fixtures/broweser_auto.py.venv/
