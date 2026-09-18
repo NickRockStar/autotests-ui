@@ -26,3 +26,9 @@ tracing
 # my artifacts
 my_info.md
 fixtures/broweser_auto.py.venv/
+
+# coverage
+coverage.html
+coverage-results
+coverage-history.json
+coverage-report.json
