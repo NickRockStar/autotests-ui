@@ -30,5 +30,5 @@ fixtures/broweser_auto.py.venv/
 # coverage
 coverage.html
 coverage-results
-coverage-history.json
-coverage-report.json
+# coverage-history.json
+# coverage-report.json
